@@ -20,14 +20,13 @@ import datetime
 import os
 import time
 from random import *
-from prettytable import PrettyTable
 
 
 GAME_SESSION = True
 SCOREBOARD_ENABLED = True
 SCOREBOARD_LENGTH = 15
 SCOREBOARD_CSV_FILE = "numguesser_scoreboard.csv" # make sure that the file has heading "name,score,hit,date" and is in .csv extension
-PLAYER_NAME = input("Mis on sinu nimi?: ")
+PLAYER_NAME = ""
 
 
 class colors:
@@ -115,6 +114,10 @@ class Game:
                 self.screen_history += f"\n{self.break_line}"
             guess_valid = False
             while not guess_valid:
+                self.clear_screen()
+                self.display_header_message()
+                self.display_level_message(level, True)
+                print(self.screen_history)
                 guess = input(self.guess_text)
                 only_numbers = True
                 for char in guess:
@@ -206,8 +209,15 @@ class Game:
     def display_scoreboard(self):
         """Displays the local scoreboard. Information is obtained from the sorted list that contains ScoreboardRow objects."""
         scoreboard_rows_sorted = self.generate_scoreboard_rows_sorted()
+        max_rank_len = len(str(SCOREBOARD_LENGTH))
+        max_name_len = 15
+        max_score_len = 4
+        max_tabamus_len = 7
+        max_aeg_len = 10
         print("\nSKOORITABEL")
-        scoreboard = PrettyTable(["Koht", "Nimi", "Skoor", "Tabamus%", "Aeg"])
+        title = f"{'KOHT':10}{'NIMI':25}{'SKOOR':10}{'TABAMUS':10}{'AEG':10}"
+        print(title)
+        print(f'{"-" * len(title)}')
         counter = 0
         match_found = False
         for row in scoreboard_rows_sorted:
@@ -215,11 +225,10 @@ class Game:
                 break
             if PLAYER_NAME == row.name and self.score == row.score and self.hit == row.hit[:-1] and self.get_current_formatted_time() == row.date and not match_found:
                 match_found = True
-                scoreboard.add_row([f"{colors.NUMGUESSER + str(counter) + colors.RESET}", f"{colors.NUMGUESSER + row.name + colors.RESET}", f"{colors.NUMGUESSER + str(row.score) + colors.RESET}", f"{colors.NUMGUESSER + row.hit + colors.RESET}", f"{colors.NUMGUESSER + row.date + colors.RESET}"])
+                print(f"{colors.NUMGUESSER}{str(counter):10}{row.name:25}{str(row.score):10}{row.hit:10}{row.date:10}{colors.RESET}")
             else:
-                scoreboard.add_row([counter, row.name, row.score, row.hit, row.date])    
+                print(f"{str(counter):10}{row.name:25}{str(row.score):10}{row.hit:10}{row.date:10}")
             counter += 1
-        print(scoreboard)
 
     def generate_scoreboard_rows_sorted(self):
         """Generates sorted list that contains ScoreboardRow objects."""
@@ -262,6 +271,7 @@ if __name__ == "__main__":
     if not os.path.exists(SCOREBOARD_CSV_FILE) and SCOREBOARD_ENABLED:
         with open(SCOREBOARD_CSV_FILE, 'w') as f:
             f.write("name,score,date\nmaximum,3710,100.00,01-01-1979\n")
+    PLAYER_NAME = input("Mis on sinu nimi?: ")
     while GAME_SESSION:
         game_instance = Game()
         game_instance.start_game()
