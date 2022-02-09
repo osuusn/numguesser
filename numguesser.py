@@ -26,7 +26,6 @@ GAME_SESSION = True
 SCOREBOARD_ENABLED = True
 SCOREBOARD_LENGTH = 15
 SCOREBOARD_CSV_FILE = "numguesser_scoreboard.csv" # make sure that the file has heading "name,score,hit,date" and is in .csv extension
-PLAYER_NAME = ""
 
 
 class colors:
@@ -35,8 +34,8 @@ class colors:
     GREEN = '\033[32m' #GREEN
     YELLOW = '\033[33m' #YELLOW
     ORANGE = '\033[91m' #ORANGE
-    RED = '\033[92m' #RED
-    BLACK = '\033[93m' #BLACK
+    RED = '\033[31m' #RED
+    BLACK = '\033[30m' #BLACK
     RESET = '\033[0m' #RESET COLOR
     NUMGUESSER = '\033[1m' #Slightly purple
 
@@ -53,6 +52,24 @@ class ScoreboardRow:
 class Game:
     """Best game engine ever."""
     def __init__(self):
+        self.break_line = "-------"
+        self.guess_text = "Paku arv: "
+        self.fibonacci = [1, 2, 3, 5, 8, 13, 21, 34]
+
+    def start_game(self, ask_name):
+        """Starts the game and finally calls the came ending."""
+        self.initalize_game_variables()
+        self.clear_screen()
+        if ask_name:
+            self.player_name = input("Mis on sinu nimi?: ")
+        for level in range(self.levels):
+            real_level = level + 1
+            self.start_level(real_level)
+        self.end_game()
+        input("\nVajuta enter, et uuesti mängida...")
+        self.start_game(False)
+
+    def initalize_game_variables(self):
         self.levels = 7
         self.score = 0
         self.guess_count = 0
@@ -60,17 +77,6 @@ class Game:
         self.total_guesses = 0
         self.levels_completed = 0
         self.max_possible_points = 0
-        self.break_line = "-------"
-        self.guess_text = "Paku arv: "
-        self.fibonacci = [1, 2, 3, 5, 8, 13, 21, 34]
-
-    def start_game(self):
-        """Starts the game and finally calls the came ending."""
-        for level in range(self.levels):
-            real_level = level + 1
-            self.start_level(real_level)
-        self.end_game()
-        input("\nVajuta enter, et uuesti mängida...")
         
     def end_game(self):
         """Literally ends the game."""
@@ -116,9 +122,15 @@ class Game:
             while not guess_valid:
                 self.clear_screen()
                 self.display_header_message()
-                self.display_level_message(level, True)
+                self.display_level_message(level, False)
                 print(self.screen_history)
                 guess = input(self.guess_text)
+                if guess == "restart" or guess == "reset" or guess == "uuesti":
+                    self.clear_screen()
+                    self.start_game(False)
+                elif guess == "namechange" or guess == "nimevahetus":
+                    self.clear_screen()
+                    self.start_game(True)
                 only_numbers = True
                 for char in guess:
                     if not char.isdigit():
@@ -178,7 +190,7 @@ class Game:
     def display_header_message(self):
         """Displays the informative header message."""
         print(f"Tere tulemast arvu-arvamise mängu {colors.NUMGUESSER + 'NUMGUESSER' + colors.RESET}")
-        print(f"Sinu eesmärk, {PLAYER_NAME}, on arvata ära arv vahemikus 0-100.")
+        print(f"Sinu eesmärk, {self.player_name}, on arvata ära arv vahemikus 0-100.")
         print("Iga arvamisega saad sa vihje, millises alas oled.")
         print(f"{colors.BLACK + 'Must' + colors.RESET} ala: oled õigest arvust rohkem, kui 40 arvu kaugusel")
         print(f"{colors.RED + 'Punane' + colors.RESET} ala: õige arv on 40 raadiuses")
@@ -223,7 +235,7 @@ class Game:
         for row in scoreboard_rows_sorted:
             if counter > SCOREBOARD_LENGTH:
                 break
-            if PLAYER_NAME == row.name and self.score == row.score and self.hit == row.hit[:-1] and self.get_current_formatted_time() == row.date and not match_found:
+            if self.player_name == row.name and self.score == row.score and self.hit == row.hit[:-1] and self.get_current_formatted_time() == row.date and not match_found:
                 match_found = True
                 print(f"{colors.NUMGUESSER}{str(counter):10}{row.name:25}{str(row.score):10}{row.hit:10}{row.date:10}{colors.RESET}")
             else:
@@ -249,7 +261,7 @@ class Game:
     def add_score_to_scoreboard(self):
         """Creates new entry into .csv file based on the game summary."""
         with open(SCOREBOARD_CSV_FILE, "a") as scoreboard_file:
-            scoreboard_file.write(f"{PLAYER_NAME},{self.score},{self.hit},{self.get_current_formatted_time()}\n")
+            scoreboard_file.write(f"{self.player_name},{self.score},{self.hit},{self.get_current_formatted_time()}\n")
 
     def get_current_formatted_time(self):
         """Obtains current time and formats it into DD-MM-YYYY format."""
@@ -271,7 +283,6 @@ if __name__ == "__main__":
     if not os.path.exists(SCOREBOARD_CSV_FILE) and SCOREBOARD_ENABLED:
         with open(SCOREBOARD_CSV_FILE, 'w') as f:
             f.write("name,score,date\nmaximum,3710,100.00,01-01-1979\n")
-    PLAYER_NAME = input("Mis on sinu nimi?: ")
     while GAME_SESSION:
         game_instance = Game()
-        game_instance.start_game()
+        game_instance.start_game(True)
